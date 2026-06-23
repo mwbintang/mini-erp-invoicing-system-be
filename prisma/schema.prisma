@@ -1,0 +1,191 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//
+// =====================
+// ENUMS
+// =====================
+//
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+}
+
+//
+// =====================
+// RBAC (MICROSERVICE READY)
+// =====================
+//
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoicesCreated Invoice[] @relation("CreatedInvoices")
+  invoicesUpdated Invoice[] @relation("UpdatedInvoices")
+
+  auditLogs AuditLog[]
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique
+
+  users       User[]
+  permissions RolePermission[]
+
+  createdAt DateTime @default(now())
+}
+
+model Permission {
+  id          String @id @default(uuid())
+  name        String @unique
+  module      String // e.g. "INVOICE", "CUSTOMER"
+
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String @id @default(uuid())
+
+  roleId       String
+  permissionId String
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+//
+// =====================
+// CUSTOMER SERVICE
+// =====================
+//
+
+model Customer {
+  id        String @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+
+  invoices  Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//
+// =====================
+// INVOICE SERVICE
+// =====================
+//
+
+model Invoice {
+  id             String        @id @default(uuid())
+  invoiceNumber  String        @unique
+
+  customerId     String
+  customer       Customer      @relation(fields: [customerId], references: [id])
+
+  issueDate      DateTime
+  dueDate        DateTime?
+
+  subtotal       Decimal       @db.Decimal(18,2)
+  taxAmount      Decimal       @db.Decimal(18,2)
+  totalAmount    Decimal       @db.Decimal(18,2)
+
+  status         InvoiceStatus @default(DRAFT)
+
+  createdById    String
+  updatedById    String?
+
+  createdBy      User          @relation("CreatedInvoices", fields: [createdById], references: [id])
+  updatedBy      User?         @relation("UpdatedInvoices", fields: [updatedById], references: [id])
+
+  items          InvoiceItem[]
+
+  integrityHash  String?
+  signature      String? // optional advanced security layer
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id          String  @id @default(uuid())
+
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(18,2)
+  totalPrice  Decimal @db.Decimal(18,2)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+//
+// =====================
+// AUDIT SERVICE (EVENT-READY)
+// =====================
+//
+
+model AuditLog {
+  id          String   @id @default(uuid())
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  entityType  String   // "Invoice", "Customer", etc
+  entityId    String
+
+  action      AuditAction
+
+  oldValue    Json?
+  newValue    Json?
+
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId])
+}

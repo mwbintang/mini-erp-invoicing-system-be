@@ -4,12 +4,12 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 //
@@ -47,6 +47,7 @@ model User {
 
   roleId    String
   role      Role     @relation(fields: [roleId], references: [id])
+  refreshTokens RefreshToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,6 +56,21 @@ model User {
   invoicesUpdated Invoice[] @relation("UpdatedInvoices")
 
   auditLogs AuditLog[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+
+  token     String   @unique
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Role {

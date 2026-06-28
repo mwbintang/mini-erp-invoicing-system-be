@@ -10,7 +10,7 @@ export class CustomersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: QueryCustomerDto) {
-    const { search, page = 1, limit = 10 } = query;
+    const { search, page = 1, limit = 10, sortBy = 'createdAt', order = 'desc' } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.CustomerWhereInput = {};
@@ -22,12 +22,16 @@ export class CustomersRepository {
       ];
     }
 
+    const orderBy: Prisma.CustomerOrderByWithRelationInput = {
+      [sortBy]: order,
+    };
+
     const [data, total] = await Promise.all([
       this.prisma.customer.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       this.prisma.customer.count({ where }),
     ]);

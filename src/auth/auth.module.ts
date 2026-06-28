@@ -9,7 +9,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { UsersModule } from '../users/users.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
-import { PermissionRepository } from '../authorization/repositories/permission.repository';
 
 @Module({
   imports: [
@@ -25,7 +24,6 @@ import { PermissionRepository } from '../authorization/repositories/permission.r
     AuthService,
     JwtStrategy,
     RefreshTokenRepository,
-    PermissionRepository,
   ],
   exports: [AuthService],
 })

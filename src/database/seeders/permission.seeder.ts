@@ -21,6 +21,8 @@ export async function seedPermissions(
     { name: 'USER_CREATE', module: 'USER' },
     { name: 'USER_UPDATE', module: 'USER' },
     { name: 'USER_DELETE', module: 'USER' },
+
+    { name: 'AUDIT_LOG_READ', module: 'AUDIT_LOG' },
   ];
 
   for (const permission of permissions) {

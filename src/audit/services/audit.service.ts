@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AuditAction } from '@prisma/client';
+import { AuditRepository } from '../repositories/audit.repository';
+import { QueryAuditLogDto } from '../dto/query-audit-log.dto';
 
 @Injectable()
 export class AuditService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly auditRepository: AuditRepository) {}
 
   async log(data: {
     userId?: string;
@@ -14,15 +15,24 @@ export class AuditService {
     oldValue?: any;
     newValue?: any;
   }) {
-    return this.prisma.auditLog.create({
-      data: {
-        userId: data.userId,
-        entityType: data.entityType,
-        entityId: data.entityId,
-        action: data.action,
-        oldValue: data.oldValue ? data.oldValue : undefined,
-        newValue: data.newValue ? data.newValue : undefined,
-      },
+    return this.auditRepository.create({
+      entityType: data.entityType,
+      entityId: data.entityId,
+      action: data.action,
+      oldValue: data.oldValue ? data.oldValue : undefined,
+      newValue: data.newValue ? data.newValue : undefined,
+      user: data.userId ? { connect: { id: data.userId } } : undefined,
     });
   }
+
+  async findAll(query: QueryAuditLogDto) {
+    return this.auditRepository.findAll(query);
+  }
+
+  async findOne(id: string) {
+    const log = await this.auditRepository.findById(id);
+    if (!log) throw new NotFoundException(`Audit log ${id} not found`);
+    return log;
+  }
 }
+

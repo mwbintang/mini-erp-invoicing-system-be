@@ -39,10 +39,17 @@ export class CustomersService {
     return customer;
   }
 
-  async update(id: string, updateCustomerDto: UpdateCustomerDto, userId: string) {
+  async update(
+    id: string,
+    updateCustomerDto: UpdateCustomerDto,
+    userId: string,
+  ) {
     const existingCustomer = await this.findOne(id);
 
-    const updatedCustomer = await this.customersRepository.update(id, updateCustomerDto);
+    const updatedCustomer = await this.customersRepository.update(
+      id,
+      updateCustomerDto,
+    );
 
     await this.auditService.log({
       userId,

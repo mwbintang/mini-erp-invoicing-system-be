@@ -1,5 +1,13 @@
 import {
-  Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { InvoicesService } from '../services/invoices.service';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
@@ -17,7 +25,7 @@ import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('invoices')
 export class InvoicesController {
-  constructor(private readonly invoicesService: InvoicesService) { }
+  constructor(private readonly invoicesService: InvoicesService) {}
 
   @Post()
   @Permissions('INVOICE_CREATE')
@@ -43,14 +51,22 @@ export class InvoicesController {
   @Patch(':id')
   @Permissions('INVOICE_UPDATE')
   @ApiOperation({ summary: 'Update an invoice' })
-  update(@Param('id') id: string, @Body() updateInvoiceDto: UpdateInvoiceDto, @CurrentUser() user: any) {
+  update(
+    @Param('id') id: string,
+    @Body() updateInvoiceDto: UpdateInvoiceDto,
+    @CurrentUser() user: any,
+  ) {
     return this.invoicesService.update(id, updateInvoiceDto, user?.id);
   }
 
   @Patch(':id/status')
   @Permissions('INVOICE_UPDATE_STATUS')
   @ApiOperation({ summary: 'Update an invoice status' })
-  updateStatus(@Param('id') id: string, @Body() updateStatusDto: UpdateInvoiceStatusDto, @CurrentUser() user: any) {
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateInvoiceStatusDto,
+    @CurrentUser() user: any,
+  ) {
     return this.invoicesService.updateStatus(id, updateStatusDto, user?.id);
   }
 

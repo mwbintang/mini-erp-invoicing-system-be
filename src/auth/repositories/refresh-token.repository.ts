@@ -3,15 +3,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class RefreshTokenRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(
-    userId: string,
-    token: string,
-    expiresAt: Date,
-  ) {
+  async create(userId: string, token: string, expiresAt: Date) {
     return this.prisma.refreshToken.create({
       data: {
         userId,

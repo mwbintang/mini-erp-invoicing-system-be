@@ -1,9 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 
-export async function seedUsers(
-  prisma: PrismaClient,
-) {
+export async function seedUsers(prisma: PrismaClient) {
   const adminRole = await prisma.role.findUnique({
     where: {
       name: 'ADMIN',
@@ -12,10 +10,9 @@ export async function seedUsers(
 
   if (!adminRole) {
     throw new Error('Admin role not found');
-  };
+  }
 
-  const hashedPassword =
-    await bcrypt.hash('Password123!', 10);
+  const hashedPassword = await bcrypt.hash('Password123!', 10);
 
   await prisma.user.upsert({
     where: {

@@ -17,45 +17,32 @@ export class PermissionsGuard implements CanActivate {
     private readonly permissionRepository: PermissionRepository,
   ) {}
 
-  async canActivate(
-    context: ExecutionContext,
-  ) {
-    const requiredPermissions =
-      this.reflector.getAllAndOverride<string[]>(
-        PERMISSION_KEY,
-        [
-          context.getHandler(),
-          context.getClass(),
-        ],
-      );
+  async canActivate(context: ExecutionContext) {
+    const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
+      PERMISSION_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!requiredPermissions?.length) {
       return true;
     }
 
-    const request =
-      context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest();
 
     const user = request.user;
 
-    const permissions =
-      await this.permissionRepository.getByRoleId(
-        user.roleId,
-      );
-
-    const names = permissions.map(
-      (permission) => permission.permission.name,
+    const permissions = await this.permissionRepository.getByRoleId(
+      user.roleId,
     );
 
-    const allowed = requiredPermissions.every(
-      (permission) =>
-        names.includes(permission),
+    const names = permissions.map((permission) => permission.permission.name);
+
+    const allowed = requiredPermissions.every((permission) =>
+      names.includes(permission),
     );
 
     if (!allowed) {
-      throw new ForbiddenException(
-        'Permission denied',
-      );
+      throw new ForbiddenException('Permission denied');
     }
 
     return true;

@@ -1,8 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-export async function seedRolePermissions(
-  prisma: PrismaClient,
-) {
+export async function seedRolePermissions(prisma: PrismaClient) {
   const adminRole = await prisma.role.findUnique({
     where: { name: 'ADMIN' },
   });
@@ -21,7 +19,7 @@ export async function seedRolePermissions(
   for (const permission of permissions) {
     if (!adminRole) {
       throw new Error('Admin role not found');
-    };
+    }
 
     await prisma.rolePermission.upsert({
       where: {
@@ -56,9 +54,7 @@ export async function seedRolePermissions(
   ];
 
   for (const permissionName of salesPermissions) {
-    const permission = permissions.find(
-      p => p.name === permissionName,
-    );
+    const permission = permissions.find((p) => p.name === permissionName);
 
     if (!permission) {
       throw new Error(`Permission not found: ${permissionName}`);
@@ -84,9 +80,7 @@ export async function seedRolePermissions(
   }
 
   for (const permissionName of financePermissions) {
-    const permission = permissions.find(
-      p => p.name === permissionName,
-    );
+    const permission = permissions.find((p) => p.name === permissionName);
 
     if (!permission) {
       throw new Error(`Permission not found: ${permissionName}`);

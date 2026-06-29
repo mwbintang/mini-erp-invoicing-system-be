@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -21,7 +18,7 @@ export class AuthService {
     private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   async login(dto: LoginDto) {
     const user = await this.userRepository.findByEmail(dto.email);
@@ -30,10 +27,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      dto.password,
-      user.password,
-    );
+    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -55,34 +49,25 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: this.configService.get<string>(
-        'jwt.accessExpiresIn',
-      ),
+      expiresIn: this.configService.get<string>('jwt.accessExpiresIn'),
     };
   }
 
   async refresh(dto: RefreshTokenDto) {
-    const storedToken =
-      await this.refreshTokenRepository.findByToken(
-        dto.refreshToken,
-      );
+    const storedToken = await this.refreshTokenRepository.findByToken(
+      dto.refreshToken,
+    );
 
     if (!storedToken) {
-      throw new UnauthorizedException(
-        'Invalid refresh token',
-      );
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (storedToken.expiresAt.getTime() < Date.now()) {
-      throw new UnauthorizedException(
-        'Refresh token expired',
-      );
+      throw new UnauthorizedException('Refresh token expired');
     }
 
     // Rotate refresh token
-    await this.refreshTokenRepository.delete(
-      dto.refreshToken,
-    );
+    await this.refreshTokenRepository.delete(dto.refreshToken);
 
     const payload = this.buildPayload(storedToken.user);
 
@@ -98,9 +83,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: this.configService.get<string>(
-        'jwt.accessExpiresIn',
-      ),
+      expiresIn: this.configService.get<string>('jwt.accessExpiresIn'),
     };
   }
 
@@ -122,15 +105,11 @@ export class AuthService {
     return {
       id: user.id,
       name: user.name,
-      email: user.email
+      email: user.email,
     };
   }
 
-  private buildPayload(user: {
-    id: string;
-    email: string;
-    roleId: string;
-  }) {
+  private buildPayload(user: { id: string; email: string; roleId: string }) {
     return {
       sub: user.id,
       email: user.email,
@@ -139,37 +118,27 @@ export class AuthService {
   }
 
   private generateAccessToken(payload: object) {
-    return this.jwtService.signAsync(
-      payload,
-      {
-        secret: this.configService.getOrThrow<string>(
-          'jwt.accessSecret',
-        ),
-        expiresIn: this.configService.getOrThrow<StringValue>(
-          'jwt.accessExpiresIn',
-        ),
-      }
-    );
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('jwt.accessSecret'),
+      expiresIn: this.configService.getOrThrow<StringValue>(
+        'jwt.accessExpiresIn',
+      ),
+    });
   }
 
   private generateRefreshToken(payload: object) {
-    return this.jwtService.signAsync(payload,
-      {
-        secret: this.configService.getOrThrow<string>(
-          'jwt.refreshSecret',
-        ),
-        expiresIn: this.configService.getOrThrow<StringValue>(
-          'jwt.refreshExpiresIn',
-        ),
-      }
-    );
+    return this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('jwt.refreshSecret'),
+      expiresIn: this.configService.getOrThrow<StringValue>(
+        'jwt.refreshExpiresIn',
+      ),
+    });
   }
 
   private getRefreshTokenExpiryDate(): Date {
-    const expiresIn =
-      this.configService.getOrThrow<StringValue>(
-        'jwt.refreshExpiresIn',
-      );
+    const expiresIn = this.configService.getOrThrow<StringValue>(
+      'jwt.refreshExpiresIn',
+    );
 
     return new Date(Date.now() + ms(expiresIn));
   }

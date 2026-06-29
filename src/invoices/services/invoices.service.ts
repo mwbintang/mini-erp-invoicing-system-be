@@ -16,7 +16,10 @@ export class InvoicesService {
   ) {}
 
   private calculateTotals(items: any[]) {
-    const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0);
+    const subtotal = items.reduce(
+      (sum, item) => sum + Number(item.quantity) * Number(item.unitPrice),
+      0,
+    );
     const taxAmount = subtotal * 0.11;
     const totalAmount = subtotal + taxAmount;
     return { subtotal, taxAmount, totalAmount };
@@ -33,7 +36,7 @@ export class InvoicesService {
     start.setHours(0, 0, 0, 0);
     const end = new Date(today);
     end.setHours(23, 59, 59, 999);
-    
+
     const count = await this.invoicesRepository.countToday(start, end);
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -55,14 +58,14 @@ export class InvoicesService {
 
   async create(createInvoiceDto: CreateInvoiceDto, userId: string) {
     const invoiceNumber = await this.generateInvoiceNumber();
-    
-    const items = createInvoiceDto.items.map(i => ({
+
+    const items = createInvoiceDto.items.map((i) => ({
       ...i,
-      totalPrice: Number(i.quantity) * Number(i.unitPrice)
+      totalPrice: Number(i.quantity) * Number(i.unitPrice),
     }));
-    
+
     const { subtotal, taxAmount, totalAmount } = this.calculateTotals(items);
-    
+
     const hashData = {
       invoiceNumber,
       customerId: createInvoiceDto.customerId,
@@ -70,16 +73,20 @@ export class InvoicesService {
       taxAmount,
       totalAmount,
       issueDate: new Date(createInvoiceDto.issueDate).toISOString(),
-      dueDate: createInvoiceDto.dueDate ? new Date(createInvoiceDto.dueDate).toISOString() : null,
+      dueDate: createInvoiceDto.dueDate
+        ? new Date(createInvoiceDto.dueDate).toISOString()
+        : null,
       status: InvoiceStatus.DRAFT,
     };
-    
+
     const integrityHash = this.generateHash(hashData);
-    
+
     const createData: Prisma.InvoiceCreateInput = {
       invoiceNumber,
       issueDate: new Date(createInvoiceDto.issueDate),
-      dueDate: createInvoiceDto.dueDate ? new Date(createInvoiceDto.dueDate) : null,
+      dueDate: createInvoiceDto.dueDate
+        ? new Date(createInvoiceDto.dueDate)
+        : null,
       subtotal,
       taxAmount,
       totalAmount,
@@ -105,28 +112,34 @@ export class InvoicesService {
 
   async update(id: string, updateInvoiceDto: UpdateInvoiceDto, userId: string) {
     const existing = await this.findOne(id);
-    
-    const customerId = updateInvoiceDto.customerId || existing.customerId;
-    const issueDate = updateInvoiceDto.issueDate || existing.issueDate.toISOString();
-    const dueDate = updateInvoiceDto.dueDate !== undefined ? updateInvoiceDto.dueDate : existing.dueDate?.toISOString();
-    
-    let itemsToProcess = existing.items;
-    let itemsCreateInput: Prisma.InvoiceItemUpdateManyWithoutInvoiceNestedInput | undefined = undefined;
 
-    
+    const customerId = updateInvoiceDto.customerId || existing.customerId;
+    const issueDate =
+      updateInvoiceDto.issueDate || existing.issueDate.toISOString();
+    const dueDate =
+      updateInvoiceDto.dueDate !== undefined
+        ? updateInvoiceDto.dueDate
+        : existing.dueDate?.toISOString();
+
+    let itemsToProcess = existing.items;
+    let itemsCreateInput:
+      | Prisma.InvoiceItemUpdateManyWithoutInvoiceNestedInput
+      | undefined = undefined;
+
     if (updateInvoiceDto.items) {
-      itemsToProcess = updateInvoiceDto.items.map(i => ({
+      itemsToProcess = updateInvoiceDto.items.map((i) => ({
         ...i,
-        totalPrice: Number(i.quantity) * Number(i.unitPrice)
+        totalPrice: Number(i.quantity) * Number(i.unitPrice),
       })) as any;
       itemsCreateInput = {
         deleteMany: {},
         create: itemsToProcess,
       };
     }
-    
-    const { subtotal, taxAmount, totalAmount } = this.calculateTotals(itemsToProcess);
-    
+
+    const { subtotal, taxAmount, totalAmount } =
+      this.calculateTotals(itemsToProcess);
+
     const hashData = {
       invoiceNumber: existing.invoiceNumber,
       customerId,
@@ -137,9 +150,9 @@ export class InvoicesService {
       dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       status: existing.status,
     };
-    
+
     const integrityHash = this.generateHash(hashData);
-    
+
     const updateData: Prisma.InvoiceUpdateInput = {
       issueDate: new Date(issueDate),
       dueDate: dueDate ? new Date(dueDate) : null,
@@ -149,7 +162,7 @@ export class InvoicesService {
       integrityHash,
       updatedBy: { connect: { id: userId } },
     };
-    
+
     if (updateInvoiceDto.customerId) {
       updateData.customer = { connect: { id: customerId } };
     }
@@ -171,9 +184,13 @@ export class InvoicesService {
     return updated;
   }
 
-  async updateStatus(id: string, updateStatusDto: UpdateInvoiceStatusDto, userId: string) {
+  async updateStatus(
+    id: string,
+    updateStatusDto: UpdateInvoiceStatusDto,
+    userId: string,
+  ) {
     const existing = await this.findOne(id);
-    
+
     const hashData = {
       invoiceNumber: existing.invoiceNumber,
       customerId: existing.customerId,
@@ -184,9 +201,9 @@ export class InvoicesService {
       dueDate: existing.dueDate ? existing.dueDate.toISOString() : null,
       status: updateStatusDto.status,
     };
-    
+
     const integrityHash = this.generateHash(hashData);
-    
+
     const updated = await this.invoicesRepository.update(id, {
       status: updateStatusDto.status,
       integrityHash,
@@ -207,9 +224,9 @@ export class InvoicesService {
 
   async remove(id: string, userId: string) {
     const existing = await this.findOne(id);
-    
+
     await this.invoicesRepository.softDelete(id);
-    
+
     await this.auditService.log({
       userId,
       entityType: 'Invoice',
@@ -217,7 +234,7 @@ export class InvoicesService {
       action: AuditAction.DELETE,
       oldValue: existing,
     });
-    
+
     return { message: 'Invoice successfully deleted' };
   }
 }

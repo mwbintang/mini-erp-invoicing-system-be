@@ -6,9 +6,7 @@ import { UpdatePermissionDto } from '../dto/update-permission.dto';
 
 @Injectable()
 export class PermissionRepository {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
     return this.prisma.permission.findMany({
@@ -40,10 +38,7 @@ export class PermissionRepository {
     });
   }
 
-  async update(
-    id: string,
-    dto: UpdatePermissionDto,
-  ) {
+  async update(id: string, dto: UpdatePermissionDto) {
     return this.prisma.permission.update({
       where: {
         id,

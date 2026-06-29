@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryAuditLogDto } from '../dto/query-audit-log.dto';
-import { Prisma, AuditAction } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuditRepository {
@@ -14,7 +14,18 @@ export class AuditRepository {
   }
 
   async findAll(query: QueryAuditLogDto) {
-    const { page = 1, limit = 10, entityType, entityId, action, userId, startDate, endDate, sortBy = 'createdAt', order = 'desc' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      entityType,
+      entityId,
+      action,
+      userId,
+      startDate,
+      endDate,
+      sortBy = 'createdAt',
+      order = 'desc',
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.AuditLogWhereInput = {};
@@ -23,7 +34,7 @@ export class AuditRepository {
     if (entityId) where.entityId = entityId;
     if (action) where.action = action;
     if (userId) where.userId = userId;
-    
+
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = new Date(startDate);

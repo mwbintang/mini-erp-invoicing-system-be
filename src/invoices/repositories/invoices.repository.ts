@@ -1,14 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryInvoiceDto } from '../dto/query-invoice.dto';
-import { Prisma, InvoiceStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class InvoicesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: QueryInvoiceDto) {
-    const { search, status, customerId, page = 1, limit = 10, sortBy = 'createdAt', order = 'desc' } = query;
+    const {
+      search,
+      status,
+      customerId,
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      order = 'desc',
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.InvoiceWhereInput = { deletedAt: null };

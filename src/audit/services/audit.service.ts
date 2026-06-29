@@ -35,4 +35,3 @@ export class AuditService {
     return log;
   }
 }
-

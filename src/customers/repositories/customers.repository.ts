@@ -10,7 +10,13 @@ export class CustomersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(query: QueryCustomerDto) {
-    const { search, page = 1, limit = 10, sortBy = 'createdAt', order = 'desc' } = query;
+    const {
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      order = 'desc',
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.CustomerWhereInput = {};

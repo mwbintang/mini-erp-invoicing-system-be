@@ -28,7 +28,9 @@ export class DashboardService {
     return {
       totalCustomers,
       totalInvoices,
-      totalRevenue: revenueResult._sum.totalAmount ? Number(revenueResult._sum.totalAmount) : 0,
+      totalRevenue: revenueResult._sum.totalAmount
+        ? Number(revenueResult._sum.totalAmount)
+        : 0,
       paidInvoices,
       pendingInvoices,
       overdueInvoices,

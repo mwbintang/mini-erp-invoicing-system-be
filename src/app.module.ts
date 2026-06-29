@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuditModule } from './audit/audit.module';
@@ -10,9 +10,12 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+import apiConfig from './config/api.config';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 @Module({
   imports: [
@@ -20,12 +23,14 @@ import jwtConfig from './config/jwt.config';
       isGlobal: true,
       cache: true,
       expandVariables: true,
-      load: [
-        appConfig,
-        databaseConfig,
-        jwtConfig,
-      ],
+      load: [appConfig, databaseConfig, jwtConfig, apiConfig],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     AuditModule,
     AuthModule,
     UsersModule,
@@ -33,9 +38,13 @@ import jwtConfig from './config/jwt.config';
     InvoicesModule,
     DashboardModule,
     PrismaModule,
-    AuthorizationModule
+    AuthorizationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

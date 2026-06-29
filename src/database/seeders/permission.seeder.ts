@@ -1,8 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-export async function seedPermissions(
-  prisma: PrismaClient,
-) {
+export async function seedPermissions(prisma: PrismaClient) {
   const permissions = [
     { name: 'CUSTOMER_CREATE', module: 'CUSTOMER' },
     { name: 'CUSTOMER_READ', module: 'CUSTOMER' },
